@@ -1,0 +1,168 @@
+import glob
+sonnets=glob.glob('c:/users/c1994/desktop/lab4/sonnets/*')	#every file name as a string
+
+# N-gram Counts & Extraction
+
+def pad(words,n):				#this function add <s> to words list
+	return ['<s>']*(n-1)+words+['</s>']
+	
+def ngramex(words,n,ngrams):			# this function extract n-grams for each word list
+	ngrams=[]	
+	words=pad(words,n)			# empty list to append n-grams
+	for i in range(len(words)-n+1):		# traverse by index number; append i to i+n
+		ngrams.append(words[i:i+n])
+	return ngrams			# return the n-gram list
+
+def counts(ngrams,dict):			# this function counts n-grams 
+	for i in ngrams:
+		cntngram=ngrams.count(i)	# use count() for counts
+		keys=tuple(i)		# make n-grams as tuples
+		dict[keys]=cntngram		# the tuple as key : counts
+	return dict				# return a dict
+
+
+			
+bif={}		# empty dictionaries for counts of n-grams
+trif={}
+quadraf={}
+bigrams=[]	# empty lists for n-grams
+trigrams=[]
+quadragrams=[]
+
+# N-grams
+for i in sonnets:		# for every file name  in sonnets
+	file=open(i)	# the location of the files
+	for line in file:
+		everyline=line.strip().split()			# every line as a list
+		bigrams.extend(ngramex(everyline,2,bigrams))	# every gram as an list item in a list(e.g. [[n,n][n,n]])
+		trigrams.extend(ngramex(everyline,3,trigrams))	
+		quadragrams.extend(ngramex(everyline,4,quadragrams))
+	file.close()
+
+counts(bigrams,bif)		# return dicts with counts of every unique n-grams
+counts(trigrams,trif)		# dicts of frequencies updated
+counts(quadragrams,quadraf)	
+
+# Randomly Choosing A Chain of N-grams
+import random
+
+def uniqngrams(ngrams,uniqngrams):	# this function returns uniq ngrams
+	uniqngrams=[]		# empty list to return
+	for i in ngrams:		# checking the ngrams already have
+		if i not in uniqngrams:		#if not in the ngram
+			uniqngrams.append(i)	# then append
+	return uniqngrams		# list of all uniqngrams in the ngram
+
+def freq(uniqngrams,dict):		# this function returns counts for uniq ngrams
+	freqngrams=[]		# empty list to return
+	for i in uniqngrams:		# every item in the ngram list
+		freqngrams.append(dict[tuple(i)])	# from dict get the value and append
+	return freqngrams		# return the uniq ngram counts
+
+def initial(nchain,uniqngrams,freqngrams,n):	# this function gets the initial ngrams to make sentence
+	nchain=[]			# empty list to append
+	flag=True			
+	while flag:
+		if n==2:		# if 2-grams
+			initiangram=random.choices(uniqngrams,freqngrams)	# a list item, random 2-grams: (pattern, counts)
+			if initiangram[0][0]=='<s>':				# if first item is <s>
+				nchain.extend(initiangram)			
+				flag=False
+		if n==3:		# if 3-grams
+			initiangram=random.choices(uniqngrams,freqngrams)
+			if initiangram[0][0]=='<s>' and initiangram[0][1]=='<s>':	# if first two items are <s>
+				nchain.extend(initiangram)
+				flag=False
+		if n==4:		# if 4-grams
+			initiangram=random.choices(uniqngrams,freqngrams)
+			if initiangram[0][0]=='<s>' and initiangram[0][1]=='<s>' and initiangram[0][2]=='<s>':	# if first three items are <s>
+				nchain.extend(initiangram)
+				flag=False
+	return nchain
+
+
+def check(convertstring,sonnets):	# this function checks if the str created is in sonnets	
+	linelist=[]			# empty list to append
+	for i in sonnets:		# every name in sonnets
+		file=open(i)	# open through name
+		for line in file:	# every line in every file
+			everyline=line.strip().split()	# every line as a list
+			linelist.append(everyline)	# every line as a list item [[]]
+	if convertstring.split() in linelist:			# check if the list item in the linelist
+		print('True','    ', convertstring)		# yes then, output
+	if convertstring.split() not in linelist:
+		print('False','    ', convertstring)		# no then, output
+			
+
+# 2-gran chain
+bichain=[]		# empty list for n-grams to make sentence
+freqbigrams=[]	# empty list for counts of n-grams
+uniqbigrams=[]	# empty list without duplicated 2-grams
+
+# 3-gram chain
+trichain=[]
+freqtrigrams=[]
+uniqtrigrams=[]
+
+# 4-gram chain
+quadrachain=[]
+freqquadragrams=[]
+uniqquadragrams=[]
+
+# get 2,3,4-uniq-grams
+uniqbigrams=uniqngrams(bigrams,uniqbigrams)			# uniq 2-grams
+uniqtrigrams=uniqngrams(trigrams,uniqtrigrams)			# uniq 3-grams
+uniqquadragrams=uniqngrams(quadragrams,uniqquadragrams)	# uniq 4-grams
+
+# get 2,3,4-counts of grams
+freqbigrams=freq(uniqbigrams,bif)				# 2-gram counts
+freqtrigrams=freq(uniqtrigrams,trif)				# 3-gram counts
+freqquadragrams=freq(uniqquadragrams,quadraf)			# 4-gram counts
+
+# get 2,3,4-chain initialize					
+bichain=initial(bichain,uniqbigrams,freqbigrams,2)			# 2-gram initial with <s> 
+trichain=initial(trichain,uniqtrigrams,freqtrigrams,3)			# 3-gram initial with <s> <s>
+quadrachain=initial(quadrachain,uniqquadragrams,freqquadragrams,4)	# 4-gram initial with <s> <s> <s>
+
+#get 2 chain sentence proto
+while bichain[len(bichain)-1][1] != '</s>':		# get af=prf 2-grams
+	randombigrams=random.choices(uniqbigrams,freqbigrams)	
+	if randombigrams[0][0]==bichain[len(bichain)-1][1]:
+		bichain.extend(randombigrams) 
+
+# get 3 chain sentence proto
+while trichain[len(trichain)-1][2]!='</s>':		# get af=prf 3-grams
+	randomtrigrams=random.choices(uniqtrigrams,freqtrigrams)
+	if randomtrigrams[0][0]==trichain[len(trichain)-1][1] and randomtrigrams[0][1]==trichain[len(trichain)-1][2] :
+		trichain.extend(randomtrigrams)
+
+# get 4 chain sentence proto
+while quadrachain[len(quadrachain)-1][3]!='</s>':	# get af=prf 4-grams
+	randomquadragrams=random.choices(uniqquadragrams,freqquadragrams)
+	if randomquadragrams[0][0]==quadrachain[len(quadrachain)-1][1] and randomquadragrams[0][1]==quadrachain[len(quadrachain)-1][2] and randomquadragrams[0][2]==quadrachain[len(quadrachain)-1][3]:
+		quadrachain.extend(randomquadragrams)
+
+#Post Processing	
+# 2-grams string
+convert_bichain=''
+bichain.pop()
+for i in bichain:
+	convert_bichain=convert_bichain+' '+i[len(i)-1]
+
+# 3-grams string
+convert_trichain=''
+trichain.pop()
+for i in trichain:
+	convert_trichain=convert_trichain+' '+i[len(i)-1]
+
+# 4-grams string
+convert_quadrachain=''
+quadrachain.pop()
+for i in quadrachain:
+	convert_quadrachain=convert_quadrachain+' '+i[len(i)-1]
+
+# Output Checking
+check(convert_bichain,sonnets)
+check(convert_trichain,sonnets)
+check(convert_quadrachain,sonnets)
+			
