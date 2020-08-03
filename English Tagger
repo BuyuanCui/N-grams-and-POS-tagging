@@ -1,0 +1,23 @@
+# Part 2 English POS
+
+import nltk
+from nltk.corpus import brown
+
+#bts=brown.tagged_sents()			# a collection of POS tagged sentences in brown corpus
+bts=brown.tagged_sents(tagset='universal')	# a version of tagged using the UNiversal POS Tagset
+size=int(len(bts)*0.9)	# 51606
+train=bts[:size]	# [[('a','POS')]...]
+test=bts[size:]	# [['a','POS')]...]
+
+#print(len(bts))	# 57340
+#print(len(train))	# 51606
+#print(len(test))	# 5734
+
+bigram_tagger=nltk.BigramTagger(train)
+#bigram_tagger.evaluate(test)		# 0.47377 accuracy
+
+t1=nltk.UnigramTagger(train)
+t2=nltk.BigramTagger(train,backoff=t1)
+print(t2.evaluate(test))		# 0.92455 accuracy
+
+
