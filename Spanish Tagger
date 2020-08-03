@@ -1,0 +1,40 @@
+# Part 2 Spanish POS
+
+import nltk
+
+trainfile=open('c:/Users/c1994/Desktop/es/es.train', encoding='utf-8')	# this fix the issue
+testfile=open('c:/Users/c1994/Desktop/es/es.test',encoding='utf-8')
+
+
+traindata=[]	# empty list for entire test corpus
+testdata=[]	# empty list for entire train corpus
+
+# get traindata
+for line in trainfile:
+	everysentence=line.strip().split()	# ['word_#_pos']
+	sentence=[]			# every time it become a new empty list to append
+	for pairs in everysentence:		# every pair of word and pos	
+		wordpos=pairs.split('_#_')	# further devide into word & pos as a list ['word','pos']
+		sentence.append(tuple(wordpos))	# every sentence appends tuples [()]
+	traindata.append(sentence)			# every sentence append to the empty corpus
+
+#print(len(traindata))	 # 14138
+#print(traindata)	# [['word','pos'] # S1
+		# ['word,'pos']] # S2
+
+# get trstdata
+for line in testfile:
+	everysentence=line.strip().split()
+	sentence=[]
+	for pairs in everysentence:
+		wordpos=pairs.split('_#_')
+		sentence.append(tuple(wordpos))
+	testdata.append(sentence)
+
+bigram_tagger=nltk.BigramTagger(traindata)
+
+#print(bigram_tagger.evaluate(testdata))	# 0.20446
+
+t1=nltk.UnigramTagger(traindata)
+t2=nltk.BigramTagger(traindata,backoff=t1)
+print(t2.evaluate(testdata))	# 0.87426
